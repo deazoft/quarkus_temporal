@@ -1,7 +1,6 @@
 [versions]
 quarkus = "3.15.1"
 temporal = "1.25.0"
-quarkus-temporal = "0.10.0"
 lombok = "1.18.34"
 mapstruct = "1.6.2"
 archunit = "1.3.0"
@@ -33,8 +32,7 @@ quarkus-opentelemetry = { module = "io.quarkus:quarkus-opentelemetry" }
 quarkus-logging-json = { module = "io.quarkus:quarkus-logging-json" }
 quarkus-micrometer-registry-prometheus = { module = "io.quarkus:quarkus-micrometer-registry-prometheus" }
 
-# Temporal (Quarkiverse)
-quarkus-temporal = { module = "io.quarkiverse.temporal:quarkus-temporal", version.ref = "quarkus-temporal" }
+# Temporal (vanilla SDK)
 temporal-sdk = { module = "io.temporal:temporal-sdk", version.ref = "temporal" }
 temporal-testing = { module = "io.temporal:temporal-testing", version.ref = "temporal" }
 
@@ -76,7 +74,6 @@ quarkus-observability = [
     "quarkus-micrometer-registry-prometheus"
 ]
 quarkus-temporal = [
-    "quarkus-temporal",
     "temporal-sdk"
 ]
 testing = [

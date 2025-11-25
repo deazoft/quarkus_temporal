@@ -69,18 +69,11 @@ quarkus:
       --initialize-at-run-time=io.temporal,
       -H:+ReportExceptionStackTraces
 
-  # Temporal configuration (quarkus-temporal extension)
+  # Temporal configuration (vanilla SDK)
   temporal:
     connection:
       target: ${TEMPORAL_ADDRESS:localhost:7233}
     namespace: ${TEMPORAL_NAMESPACE:default}
-    enable-opentelemetry: true
-    worker:
-      - name: loan-worker
-        task-queue: loan-processing
-        workflow-classes:
-          - com.addi.loan.features.submitloan.SubmitLoanWorkflowImpl
-          - com.addi.loan.features.checkcredit.CheckCreditWorkflowImpl
 
 # Kafka configuration (SmallRye Reactive Messaging)
 mp:
