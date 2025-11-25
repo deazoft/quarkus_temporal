@@ -6,11 +6,6 @@ plugins {
 group = "com.addi"
 version = "1.0.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-    maven { url = uri("https://packages.confluent.io/maven/") }
-}
-
 dependencies {
     // Quarkus BOM
     implementation(enforcedPlatform(libs.quarkus.bom))
