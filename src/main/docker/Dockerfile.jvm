@@ -1,0 +1,24 @@
+####
+# This Dockerfile is used to build a JVM-based image (for development/testing)
+#
+# Build the image with:
+# docker build -f src/main/docker/Dockerfile.jvm -t loan-service:jvm .
+#
+# Run the container with:
+# docker run -i --rm -p 8080:8080 loan-service:jvm
+####
+
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /deployments
+
+# Copy the application JAR
+COPY build/quarkus-app/lib/ /deployments/lib/
+COPY build/quarkus-app/*.jar /deployments/
+COPY build/quarkus-app/app/ /deployments/app/
+COPY build/quarkus-app/quarkus/ /deployments/quarkus/
+
+EXPOSE 8080
+USER 1001
+
+ENTRYPOINT ["java", "-jar", "/deployments/quarkus-run.jar"]

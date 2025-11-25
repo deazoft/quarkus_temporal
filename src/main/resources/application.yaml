@@ -1,0 +1,115 @@
+quarkus:
+  application:
+    name: loan-application-service
+
+  # HTTP Configuration
+  http:
+    port: 8080
+    host: 0.0.0.0
+
+  # Reactive PostgreSQL
+  datasource:
+    db-kind: postgresql
+    reactive:
+      url: postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:loans}
+      max-size: 20
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  # Flyway migrations
+  flyway:
+    migrate-at-start: true
+    locations: db/migration
+
+  # JSON Logging (OTEL enriched per ADR145/ADR093)
+  log:
+    console:
+      format: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p traceId=%X{traceId}, spanId=%X{spanId} [%c{3.}] (%t) %s%e%n"
+      json:
+        ~: false  # Set to true for JSON logs in production
+        additional-field:
+          service.name:
+            value: loan-application-service
+    level: INFO
+    category:
+      "com.addi.loan":
+        level: DEBUG
+
+  # OpenTelemetry - Tracing-First per ADR145/ADR093
+  otel:
+    enabled: ${OTEL_ENABLED:true}
+    exporter:
+      otlp:
+        endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
+        protocol: grpc
+    resource:
+      attributes:
+        service.name: loan-application-service
+        deployment.environment: ${ENV:local}
+    traces:
+      enabled: true
+      sampler:
+        ratio: 1.0
+    logs:
+      enabled: true
+
+  # Health & Metrics
+  health:
+    extensions:
+      enabled: true
+  micrometer:
+    export:
+      prometheus:
+        enabled: true
+        path: /metrics
+
+  # Native image configuration (Mandrel per ADR145)
+  native:
+    additional-build-args: >
+      --initialize-at-run-time=io.temporal,
+      -H:+ReportExceptionStackTraces
+
+  # Temporal configuration (quarkus-temporal extension)
+  temporal:
+    connection:
+      target: ${TEMPORAL_ADDRESS:localhost:7233}
+    namespace: ${TEMPORAL_NAMESPACE:default}
+    enable-opentelemetry: true
+    worker:
+      - name: loan-worker
+        task-queue: loan-processing
+        workflow-classes:
+          - com.addi.loan.features.submitloan.SubmitLoanWorkflowImpl
+          - com.addi.loan.features.checkcredit.CheckCreditWorkflowImpl
+
+# Kafka configuration (SmallRye Reactive Messaging)
+mp:
+  messaging:
+    incoming:
+      loan-requests:
+        connector: smallrye-kafka
+        topic: loan-requests
+        bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+        group.id: loan-application-service
+        auto.offset.reset: latest
+        value.deserializer: io.quarkus.kafka.client.serialization.JsonbDeserializer
+        # For Avro (uncomment and configure):
+        # value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+        # schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+
+    outgoing:
+      loan-decisions:
+        connector: smallrye-kafka
+        topic: loan-decisions
+        bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+        value.serializer: io.quarkus.kafka.client.serialization.JsonbSerializer
+        # For Avro (uncomment and configure):
+        # value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+        # schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+
+# Application-specific configuration
+loan:
+  processing:
+    auto-approve-threshold: 750
+    manual-review-threshold: 650
+    max-auto-approve-amount: 50000

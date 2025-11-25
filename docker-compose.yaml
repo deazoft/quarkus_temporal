@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: loan-postgres
+    environment:
+      POSTGRES_DB: loans
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loan-network
+
+  # Temporal Server
+  temporal:
+    image: temporalio/auto-setup:1.24.2
+    container_name: loan-temporal
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PWD=postgres
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - loan-network
+
+  # Temporal Web UI
+  temporal-ui:
+    image: temporalio/ui:2.26.2
+    container_name: loan-temporal-ui
+    ports:
+      - "8080:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    depends_on:
+      - temporal
+    networks:
+      - loan-network
+
+  # Kafka (using Redpanda for simplicity)
+  redpanda:
+    image: redpandadata/redpanda:v24.1.1
+    container_name: loan-kafka
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 1G
+      - --overprovisioned
+      - --kafka-addr PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://localhost:9092
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+    ports:
+      - "9092:9092"
+      - "8082:8082"
+    networks:
+      - loan-network
+
+  # Kafka UI (optional)
+  redpanda-console:
+    image: redpandadata/console:v2.5.2
+    container_name: loan-kafka-ui
+    ports:
+      - "8081:8080"
+    environment:
+      - KAFKA_BROKERS=redpanda:9092
+    depends_on:
+      - redpanda
+    networks:
+      - loan-network
+
+  # Jaeger (OpenTelemetry backend)
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    container_name: loan-jaeger
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - loan-network
+
+volumes:
+  postgres_data:
+
+networks:
+  loan-network:
+    driver: bridge

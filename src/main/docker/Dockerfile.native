@@ -1,0 +1,33 @@
+####
+# This Dockerfile is used to build a native executable using Mandrel
+# (per ADR145 native image requirements)
+#
+# Build the image with:
+# docker build -f src/main/docker/Dockerfile.native -t loan-service:native .
+#
+# Run the container with:
+# docker run -i --rm -p 8080:8080 loan-service:native
+####
+
+# Build stage - using Mandrel per ADR145
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21 AS build
+
+WORKDIR /app
+COPY --chown=quarkus:quarkus . .
+
+USER quarkus
+RUN ./gradlew build -Dquarkus.native.enabled=true -x test
+
+# Runtime stage - minimal native image
+FROM quay.io/quarkus/quarkus-micro-image:2.0
+
+WORKDIR /work/
+
+COPY --from=build /app/build/*-runner /work/application
+
+RUN chmod 775 /work /work/application
+
+EXPOSE 8080
+USER 1001
+
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
