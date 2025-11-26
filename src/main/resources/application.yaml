@@ -2,6 +2,10 @@ quarkus:
   application:
     name: loan-application-service
 
+  # Disable ALL Dev Services globally (we use docker-compose)
+  devservices:
+    enabled: false
+
   # HTTP Configuration
   http:
     port: 8090
@@ -10,11 +14,11 @@ quarkus:
   # Reactive PostgreSQL
   datasource:
     db-kind: postgresql
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
     reactive:
       url: postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:loans}
       max-size: 20
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
     # Disable Dev Services (we use docker-compose)
     devservices:
       enabled: false
@@ -97,20 +101,13 @@ mp:
         bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
         group.id: loan-application-service
         auto.offset.reset: latest
-        value.deserializer: io.quarkus.kafka.client.serialization.JsonbDeserializer
-        # For Avro (uncomment and configure):
-        # value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
-        # schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+        # Let Quarkus auto-detect the deserializer based on return type
 
     outgoing:
       loan-decisions:
         connector: smallrye-kafka
         topic: loan-decisions
         bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-        value.serializer: io.quarkus.kafka.client.serialization.JsonbSerializer
-        # For Avro (uncomment and configure):
-        # value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
-        # schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
 
 # Application-specific configuration
 loan:
