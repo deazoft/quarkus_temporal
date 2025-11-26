@@ -6,6 +6,7 @@ mapstruct = "1.6.2"
 archunit = "1.3.0"
 testcontainers = "1.20.2"
 assertj = "3.26.3"
+mockito = "5.11.0"
 
 [libraries]
 # Quarkus BOM
@@ -46,6 +47,7 @@ quarkus-junit5 = { module = "io.quarkus:quarkus-junit5" }
 rest-assured = { module = "io.rest-assured:rest-assured" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
 testcontainers-kafka = { module = "org.testcontainers:kafka" }
@@ -81,6 +83,7 @@ testing = [
     "rest-assured",
     "archunit-junit5",
     "assertj-core",
+    "mockito-core",
     "awaitility",
     "temporal-testing"
 ]
