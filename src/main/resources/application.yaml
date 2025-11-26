@@ -4,7 +4,7 @@ quarkus:
 
   # HTTP Configuration
   http:
-    port: 8080
+    port: 8090
     host: 0.0.0.0
 
   # Reactive PostgreSQL
@@ -15,6 +15,9 @@ quarkus:
       max-size: 20
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres}
+    # Disable Dev Services (we use docker-compose)
+    devservices:
+      enabled: false
 
   # Flyway migrations
   flyway:
@@ -74,6 +77,15 @@ quarkus:
     connection:
       target: ${TEMPORAL_ADDRESS:localhost:7233}
     namespace: ${TEMPORAL_NAMESPACE:default}
+
+  # Disable all Dev Services (we use docker-compose for infrastructure)
+  kafka:
+    devservices:
+      enabled: false
+
+  apicurio-registry:
+    devservices:
+      enabled: false
 
 # Kafka configuration (SmallRye Reactive Messaging)
 mp:
